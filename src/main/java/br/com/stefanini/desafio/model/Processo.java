@@ -15,8 +15,8 @@ public class Processo {
 	private String numero;
 	@Column(name = "data_cadastro")
 	private LocalDateTime dataCadastro;
-	@Column(nullable = false)
-	private boolean publico;
+	@Column(name = "segredo_justica", nullable = false)
+	private boolean segredoDeJustica;
 	@Enumerated(EnumType.STRING)
 	private SituacaoProcesso situacao = SituacaoProcesso.EM_ANDAMENTO;
 	@Column(name = "quantidade_partes", nullable = false)
@@ -24,9 +24,9 @@ public class Processo {
 	
 	public Processo() {}
 	
-	public Processo(String numero, boolean publico, int quantidadePartes) {
+	public Processo(String numero, boolean segredoDeJustica, int quantidadePartes) {
 		this.numero = numero;
-		this.publico = publico;
+		this.segredoDeJustica = segredoDeJustica;
 		this.quantidadePartes = quantidadePartes;
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
@@ -51,12 +51,12 @@ public class Processo {
 		this.dataCadastro = dataCadastro;
 	}
 	
-	public boolean isPublico() {
-		return publico;
+	public boolean isSegredoDeJustica() {
+		return segredoDeJustica;
 	}
 	
-	public void setPublico(boolean publico) {
-		this.publico = publico;
+	public void setSegredoDeJustica(boolean segredoDeJustica) {
+		this.segredoDeJustica = segredoDeJustica;
 	}
 	
 	public SituacaoProcesso getSituacao() {
