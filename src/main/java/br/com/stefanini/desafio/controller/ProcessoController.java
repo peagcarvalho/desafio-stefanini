@@ -2,8 +2,8 @@ package br.com.stefanini.desafio.controller;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,10 +39,14 @@ public class ProcessoController {
 	}
 	
 	@GetMapping("/{numero}")
-	public ProcessoDTO buscar(@PathVariable String numero) {
-		Processo processo = processoRepository.findById(numero).get();
+	public ResponseEntity<ProcessoDTO> buscar(@PathVariable String numero) {
+		Optional<Processo> optional = processoRepository.findById(numero);
 		
-		return new ProcessoDTO(processo);
+		if (optional.isPresent()) {
+			return ResponseEntity.ok(new ProcessoDTO(optional.get()));
+		}
+		
+		return ResponseEntity.notFound().build();
 	}
 	
 	@PostMapping
@@ -58,23 +62,42 @@ public class ProcessoController {
 	@PutMapping("/{numero}")
 	@Transactional
 	public ResponseEntity<ProcessoDTO> atualizar(@PathVariable String numero, @RequestBody @Valid AtualizacaoProcessoForm form) {
-		Processo processo = form.atualizar(processoRepository.findById(numero).get());
+		Optional<Processo> optional = processoRepository.findById(numero);
 		
-		return ResponseEntity.ok(new ProcessoDTO(processo));
+		if (optional.isPresent()) {
+			Processo processo = form.atualizar(optional.get());
+			
+			return ResponseEntity.ok(new ProcessoDTO(processo));
+		}
+		
+		return ResponseEntity.notFound().build();
 	}
 	
 	@DeleteMapping("/{numero}")
 	public ResponseEntity<?> excluir(@PathVariable String numero) {
-		processoRepository.deleteById(numero);
+		Optional<Processo> optional = processoRepository.findById(numero);
 		
-		return ResponseEntity.ok().build();
+		if (optional.isPresent()) {
+			processoRepository.deleteById(numero);
+			
+			return ResponseEntity.ok().build();
+		}
+		
+		return ResponseEntity.notFound().build();
 	}
 	
 	@GetMapping("/situacao/{situacao}")
-	public List<ProcessoDTO> buscarPelaSituacao(@PathVariable SituacaoProcesso situacao) {
-		List<Processo> processos = processoRepository.findBySituacao(situacao);
+	public ResponseEntity<List<ProcessoDTO>> buscarPelaSituacao(@PathVariable String situacao) {
+		SituacaoProcesso situacaoEnum = null;
+		try {
+			situacaoEnum = SituacaoProcesso.valueOf(situacao);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().build();
+		}
 		
-		return ProcessoDTO.converter(processos);
+		List<Processo> processos = processoRepository.findBySituacao(situacaoEnum);
+		
+		return ResponseEntity.ok(ProcessoDTO.converter(processos));
 	}
 	
 	@GetMapping("/publicos")
@@ -92,39 +115,51 @@ public class ProcessoController {
 	}
 	
 	@GetMapping("/buscarPelaData")
-	public List<ProcessoDTO> buscarPelaData(String data, String dataFinal) {
+	public ResponseEntity<List<ProcessoDTO>> buscarPelaData(String data, String dataFinal) {
 		LocalDate data1 = null;
 		LocalDate data2 = null;
 		
 		if (data != null) {
-			String[] dataDividida = data.split("/");
-			
-			int dia = Integer.parseInt(dataDividida[0]);
-			int mes = Integer.parseInt(dataDividida[1]);
-			int ano = Integer.parseInt(dataDividida[2]);
-			
-			data1 = LocalDate.of(ano, mes, dia);
+			try {
+				String[] dataDividida = data.split("/");
+				
+				int dia = Integer.parseInt(dataDividida[0]);
+				int mes = Integer.parseInt(dataDividida[1]);
+				int ano = Integer.parseInt(dataDividida[2]);
+				
+				data1 = LocalDate.of(ano, mes, dia);
+			} catch (Exception ex) {
+				return ResponseEntity.badRequest().build();
+			}
+		} else {
+			return ResponseEntity.notFound().build();
 		}
 		
 		if (dataFinal != null) {
-			String[] dataFinalDividida = dataFinal.split("/");
-			
-			int dia = Integer.parseInt(dataFinalDividida[0]);
-			int mes = Integer.parseInt(dataFinalDividida[1]);
-			int ano = Integer.parseInt(dataFinalDividida[2]);
-			
-			data2 = LocalDate.of(ano, mes, dia);
-			
-			List<Processo> processos = processoRepository.procurarPorIntervaloEntreDatas(data1, data2);
-			return ProcessoDTO.converter(processos);
+			try {
+				String[] dataFinalDividida = dataFinal.split("/");
+				
+				int dia = Integer.parseInt(dataFinalDividida[0]);
+				int mes = Integer.parseInt(dataFinalDividida[1]);
+				int ano = Integer.parseInt(dataFinalDividida[2]);
+				
+				data2 = LocalDate.of(ano, mes, dia);
+				
+				List<Processo> processos = processoRepository.procurarPorIntervaloEntreDatas(data1, data2);
+				return ResponseEntity.ok(ProcessoDTO.converter(processos));
+			} catch (Exception ex) {
+				return ResponseEntity.badRequest().build();
+			}	
 		}
+	
+		List<Processo> processos = null;
+		try {
+			processos = processoRepository.procurarPorData(data1);
+		} catch (Exception ex) {
+			return ResponseEntity.badRequest().build();
+		};
 		
-		if (data == null && dataFinal == null) {
-			return new ArrayList<ProcessoDTO>();
-		}
-		
-		List<Processo> processos = processoRepository.procurarPorData(data1);
-		return ProcessoDTO.converter(processos);
+		return ResponseEntity.ok(ProcessoDTO.converter(processos));
 	}
 	
 }
