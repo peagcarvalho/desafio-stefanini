@@ -1,14 +1,25 @@
 package br.com.stefanini.desafio.controller;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 import br.com.stefanini.desafio.controller.dto.ProcessoDTO;
+import br.com.stefanini.desafio.controller.form.AtualizacaoProcessoForm;
+import br.com.stefanini.desafio.controller.form.ProcessoForm;
 import br.com.stefanini.desafio.model.Processo;
 import br.com.stefanini.desafio.model.SituacaoProcesso;
 import br.com.stefanini.desafio.repository.ProcessoRepository;
@@ -28,10 +39,35 @@ public class ProcessoController {
 	}
 	
 	@GetMapping("/{numero}")
-	public ProcessoDTO buscarPeloNumero(@PathVariable String numero) {
+	public ProcessoDTO buscar(@PathVariable String numero) {
 		Processo processo = processoRepository.findById(numero).get();
 		
 		return new ProcessoDTO(processo);
+	}
+	
+	@PostMapping
+	public ResponseEntity<ProcessoDTO> cadastrar(@RequestBody @Valid ProcessoForm form, UriComponentsBuilder uriBuilder) {
+		Processo processo = form.toProcesso();
+		
+		processoRepository.save(processo);
+		
+		URI uri = uriBuilder.path("/processos/{id}").buildAndExpand(processo.getNumero()).toUri();
+		return ResponseEntity.created(uri).body(new ProcessoDTO(processo));
+	}
+	
+	@PutMapping("/{numero}")
+	@Transactional
+	public ResponseEntity<ProcessoDTO> atualizar(@PathVariable String numero, @RequestBody @Valid AtualizacaoProcessoForm form) {
+		Processo processo = form.atualizar(processoRepository.findById(numero).get());
+		
+		return ResponseEntity.ok(new ProcessoDTO(processo));
+	}
+	
+	@DeleteMapping("/{numero}")
+	public ResponseEntity<?> excluir(@PathVariable String numero) {
+		processoRepository.deleteById(numero);
+		
+		return ResponseEntity.ok().build();
 	}
 	
 	@GetMapping("/situacao/{situacao}")
@@ -55,8 +91,8 @@ public class ProcessoController {
 		return ProcessoDTO.converter(processos);
 	}
 	
-	@GetMapping("/buscarPorData")
-	public List<ProcessoDTO> buscarPorData(String data, String dataFinal) {
+	@GetMapping("/buscarPelaData")
+	public List<ProcessoDTO> buscarPelaData(String data, String dataFinal) {
 		LocalDate data1 = null;
 		LocalDate data2 = null;
 		
