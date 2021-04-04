@@ -9,7 +9,7 @@ import br.com.stefanini.desafio.model.Processo;
 public class ProcessoForm {
 	
 	@NotBlank
-	@Pattern(regexp = "[0-9]{6}-?[0-9]{2}.?[0-9]{4}.?[0-9]{1}.?[0-9]{2}.?[0-9]{4}")
+	@Pattern(regexp = "[0-9]{6}-?[0-9]{2}.?[0-9]{4}.?[0-9]{1}.?[0-9]{2}.?[0-9]{4}", message = "deve estar no formato XXXXXX-XX.XXXX.X.XX.XXXX")
 	private String numero;
 	@NotNull
 	private boolean segredoDeJustica;
