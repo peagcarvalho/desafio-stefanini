@@ -2,8 +2,10 @@ package br.com.stefanini.desafio.controller;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,13 +123,9 @@ public class ProcessoController {
 		
 		if (data != null) {
 			try {
-				String[] dataDividida = data.split("/");
+				List<Integer> ints = Arrays.stream(data.split("-")).map(Integer::parseInt).collect(Collectors.toList());
 				
-				int dia = Integer.parseInt(dataDividida[0]);
-				int mes = Integer.parseInt(dataDividida[1]);
-				int ano = Integer.parseInt(dataDividida[2]);
-				
-				data1 = LocalDate.of(ano, mes, dia);
+				data1 = LocalDate.of(ints.get(0), ints.get(1), ints.get(2));
 			} catch (Exception ex) {
 				return ResponseEntity.badRequest().build();
 			}
@@ -137,13 +135,9 @@ public class ProcessoController {
 		
 		if (dataFinal != null) {
 			try {
-				String[] dataFinalDividida = dataFinal.split("/");
+				List<Integer> ints = Arrays.stream(dataFinal.split("-")).map(Integer::parseInt).collect(Collectors.toList());
 				
-				int dia = Integer.parseInt(dataFinalDividida[0]);
-				int mes = Integer.parseInt(dataFinalDividida[1]);
-				int ano = Integer.parseInt(dataFinalDividida[2]);
-				
-				data2 = LocalDate.of(ano, mes, dia);
+				data2 = LocalDate.of(ints.get(0), ints.get(1), ints.get(2));
 				
 				List<Processo> processos = processoRepository.procurarPorIntervaloEntreDatas(data1, data2);
 				return ResponseEntity.ok(ProcessoDTO.converter(processos));
